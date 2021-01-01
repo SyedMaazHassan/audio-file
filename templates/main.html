@@ -1,0 +1,171 @@
+{% load static %}
+
+{% include 'inc/head.inc.html' %}
+{% include 'inc/navbar.inc.html' %}
+
+<body>
+
+    <div class="container">
+
+        <form action="add-song" method="POST" enctype="multipart/form-data">
+          {% csrf_token %}
+
+          <div class="my-5">
+              <p class="my-3" style="color: grey; font-size:20px">Upload your favourite song here!</p>
+              <div class="my-1 p-5 text-center d-flex align-items-center justify-content-center dropzone" ondrop="now_drop(event)" id="dropzone" ondragover="allowdrop(event)" ondragleave="previous_state(event)" >
+                
+
+                <div class="my-0 py-0">
+                  <audio id="audio" style="display: none;" controls>
+                      <source id="showing_div" src="" type="audio/mpeg">
+                    Your browser does not support the audio element.
+                  </audio>
+
+                  <div class="mt-3">
+                      Drag your file here or &nbsp;&nbsp; 
+                      <button type="button" class="btn btn-secondary" onclick="upload_file('target_file')">Upload file</button> 
+                      <input type="file" id="target_file" name="targetfile" onchange="readURL(this, 'showing_div')" style="height: 0px; overflow:hidden; width: 0px;" required>  
+                  </div>
+                  
+                </div>
+              
+              </div>
+              <div class="row">
+                <div class="col-sm-6">
+                  <p class="text-success" id="success-msg"></p>
+      
+                </div>
+
+                <div class="col-sm-6 text-right">
+                  <button class="btn btn-info px-4" type="submit" id="submit-btn" style="display: none;">Save</button>
+                </div>
+
+
+              </div>
+      
+              <p class="text-danger mt-4" id="file-error-msg"></p>
+      
+          </div>
+
+        </form>
+
+
+        <h3>All added songs</h3>
+
+        {% if not allSongs %}
+
+          <div class="alert alert-warning" role="alert">
+            You have not added any song yet. Upload now in the above section!
+          </div>
+
+        {% endif %}
+
+        <div class="row py-4">
+      
+
+          {% for song in allSongs %}
+
+        
+          <div class="col-sm-4">
+
+            <div class="card" style="width: 100%;">
+              <!--tips: add .text-center,.text-right to the .card to change card text alignment-->
+              <div class="card-body">
+                <h6 class="card-subtitle my-2 text-muted">{{song.song_name}}</h6>
+                <audio controls style="width: 100%;">
+                    <source src="media/{{ song.song_file }}" type="audio/mpeg">
+                  Your browser does not support the audio element.
+                </audio>
+              </div>
+            </div>
+
+         
+          </div>
+          {% endfor %}
+        </div>
+
+    </div>
+
+  
+</body>
+
+
+<script>
+  document.getElementById("target_file").addEventListener("change", handleFiles, false);
+
+
+  function allowdrop(event){
+      event.preventDefault();
+      var THIS = event.target;
+      $(THIS).addClass("dragover");
+      $("#showing_div").css("display", "none");
+
+  }
+
+  function upload_file(whick_input) {
+        $("#"+whick_input).click();
+    }
+
+  function now_drop(event){
+      event.preventDefault();
+      input = document.getElementById("target_file");
+      input.files = event.dataTransfer.files;
+      readURL(input, 'showing_div');
+  }
+
+  function previous_state(event){
+        var THIS = event.target;
+        $(THIS).removeClass("dragover");
+  }
+
+  function handleFiles(event) {
+        var files = event.target.files;
+        showNow(files[0]);
+    }
+
+  function showNow(myFile){
+        $("#showing_div").attr("src", URL.createObjectURL(myFile));
+        document.getElementById("audio").load();
+        $("#dropzone").removeClass("dragover");
+  }
+
+
+  function readURL(input, show) {
+        $("#"+show).css('display', 'none');
+        nameFile = input.files[0].name.split(".");
+        nameFile = nameFile[nameFile.length-1];
+        
+        console.log(nameFile);
+        if(nameFile=="mp3"){
+            if (input.files && input.files[0]) {
+
+                showNow(input.files[0]);
+                $("#audio").css('display', '');
+                $("#submit-btn").css('display', '');
+                $("#file-error-msg").text("");
+                $("#success-msg").text("You song has been attached!");
+
+    
+            }
+        }else{
+            $("#see_docs_file").css('display', 'none');
+            $("#success-msg").css('display', 'none');
+            $("#"+show).css('display', 'none');
+            // $("#target_file").load(location.href + " #target_file>*", "");
+            $("#target_file").val(null);
+            console.log("this is input");
+            console.log(input.files);
+            console.log("this is input");
+            // $("#");
+            alert("Invalid file type!");
+            $("showing_div").removeClass("dragover");
+
+        }
+        
+    }
+
+
+</script>
+
+
+</html> 
