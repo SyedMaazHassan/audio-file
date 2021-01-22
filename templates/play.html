@@ -117,6 +117,7 @@
                     </div>
                 </div>
 
+              
             </div>
         </div>
 
@@ -127,13 +128,32 @@
         
             {% endfor %}
         </div>
+
     </div>
+
+    {% for prompt in song.all_prompts.all %}
+
+        <audio preload="auto" id="my-prompt-{{ prompt.id }}" style="height: 0px; opacity: 0px;" controls="controls">
+            <source src="media/{{ prompt.which_prompt.audio_file }}" type="audio/mpeg">
+            Your browser does not support the audio element.
+        </audio>
+
+    {% endfor %}
+
 
 
 <script src="{% static 'scripts/script.js' %}"></script>
 <script>
     $('[data-toggle="tooltip"]').tooltip();
 
+    Object.size = function(obj) {
+        var size = 0,
+        key;
+        for (key in obj) {
+            if (obj.hasOwnProperty(key)) size++;
+        }
+        return size;
+    };
  
     // Add to playlist
     $(".add-to-playlist-btn").on('click', function () {
@@ -169,12 +189,6 @@
     });
 
 
-
-
-
-
-
-
     let audio_player = document.getElementById("player-audio");
     let video_player = document.getElementById("player-video");
 
@@ -188,13 +202,42 @@
         video_player.pause();
     });
 
-    $("#player-audio").bind("timeupdate", function() {
-        var currentTime = parseInt(this.currentTime, 10);
-        if(currentTime == 70) { 
-            console.log("70 seconds in");
-            $(this).unbind("timeupdate");
-        }
-    });
+
+    // console.log(`no. of prompts => ${}`);
+    var get_all_prompts = JSON.parse('{{ song.get_all_prompts | safe }}');
+    console.log(get_all_prompts);
+
+    if (Object.size(get_all_prompts) > 0) {
+        let main_audio_player = document.getElementById("player-audio");
+        let all_prompts_ids = Object.keys(get_all_prompts);
+        
+        $("#player-audio").bind("timeupdate", function() {
+            var currentTime = parseInt(this.currentTime, 10);
+
+            if (all_prompts_ids.length < 1) {
+                $(this).unbind("timeupdate");
+            }
+
+            for (let i = 0; i < all_prompts_ids.length; i++) {
+                const thisId = all_prompts_ids[i];
+
+                if(currentTime == thisId) { 
+                    console.log(`${thisId} seconds in`);
+                    let my_prompt_id = get_all_prompts[thisId];
+                    let my_focused_prompt = document.getElementById(`my-prompt-${my_prompt_id}`);
+
+                    main_audio_player.pause();
+                    my_focused_prompt.play();
+                    my_focused_prompt.addEventListener("ended",function() {
+                        main_audio_player.play();
+                    });
+
+                    all_prompts_ids.splice(i, 1)
+                }
+            }
+        });
+    }
+
 
 </script>
 

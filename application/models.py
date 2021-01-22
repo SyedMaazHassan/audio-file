@@ -1,5 +1,6 @@
 from django.db import models
 from datetime import datetime
+import json
 from django.contrib.auth.models import User, auth
 # Create your models here.
 
@@ -25,6 +26,14 @@ class song(models.Model):
     all_prompts = models.ManyToManyField(prompts_time, null = True, blank = True)
     added_by = models.ForeignKey(User, on_delete = models.CASCADE)
     is_favorite = models.BooleanField(default = False)
+
+    def get_all_prompts(self):
+        original_prompts_objects = self.all_prompts.all()
+        js_obejct = {}
+        for prompt in original_prompts_objects:
+            js_obejct[prompt.instance] = prompt.id
+
+        return json.dumps(js_obejct)
 
     def song_name(self):
         return str(self.song_file).split('music/')[1]
