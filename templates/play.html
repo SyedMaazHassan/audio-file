@@ -1,0 +1,202 @@
+{% extends 'inc/base.html' %}
+{% load static %}
+
+{% block title %}
+    Play
+{% endblock title %}
+
+
+{% block content %}
+
+    <div class="container">
+    
+        
+        <div class="row my-3">
+            <div class="col-sm-8 py-2">
+                <div class="card" style="width: 100%; border-radius: 10px; box-shadow: 7px 7px 7px grey;">
+                    <!--tips: add .text-center,.text-right to the .card to change card text alignment-->
+                    <div class="card-body text-center">
+
+                        <h4 class="mb-3">{{ song.song_name }}</h4>
+
+                        <video id="player-video" width="100%" height="240" style="background-color: #000000; border-radius: 10px;" muted loop>
+                            <source src="{% static 'videos/player.mp4' %}" type="video/mp4">
+                            Your browser does not support the video tag.
+                        </video>
+
+                        <audio id="player-audio" class="my-3" style="width: 70%;" preload="auto" controls="controls">
+                            <source src="media/{{ song.song_file }}" type="audio/mpeg">
+                          Your browser does not support the audio element.
+                        </audio>
+
+                    
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-sm-4 py-2 align-items-strech">
+
+                <div class="card" style="border-radius: 10px; height: 425px;">
+                    <!--tips: add .text-center,.text-right to the .card to change card text alignment-->
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-6 col-sm-6 col-md-6 col-lg-6 col-xl-6">
+                                <h5 class="card-title">Play list</h5>
+                            </div>
+
+                            <div class="col-6 col-sm-6 col-lg-6 col-md-6 col-xl-6 text-right">
+                                <a data-toggle="collapse" data-target="#add-playlist-form">
+                                    <i class="material-icons text-info cursor" data-toggle="tooltip" title="Add a play list">add_circle</i>
+                                </a>
+                            </div>
+                        </div>
+
+                        <form action="" method="post" class="collapse" id="add-playlist-form">
+                            {% csrf_token %}
+                            <div class="row px-3">
+                                <div class="col-sm-9 py-2 px-0">
+                                    <input type="text" name="playlistName" placeholder="Play list name" style="border-radius: 5px 0px 0px 5px;" class="form-control" required>
+                                </div>
+
+                                <div class="col-sm-3 py-2 px-0">
+                                    <button type="submit" class="btn btn-info btn-block" style="border-radius: 0px 5px 5px 0px;">save</button>
+                                </div>
+                            </div>
+                        </form>
+
+                        <div style="overflow-y: auto; height: 90%;">
+                            {% if not all_playlists %}
+
+                                <div class="alert alert-success text-center" role="alert">
+                                    No playlist exists
+                                </div>
+
+                            {% endif %}
+                      
+                            {% for playlist in all_playlists %}
+                            <div class="card my-2 mr-2" data-toggle="collapse" data-target="#{{playlist.id}}-list" style="border-radius: 10px; box-shadow: 3px 3px 3px rgb(201, 201, 201);">
+                                <div class="card-body">
+                                    <div class="row">
+                                        <div class="col-9 col-sm-9">
+                                            <h5 class="card-title">{{ playlist.playlist_name }}</h5>
+                                            <p class="my-0 py-0"><b>Created at</b> {{ playlist.created_at.date }}</p>
+                                        </div>
+
+                                        <div class="col-3 col-sm-3 text-right">
+                                            {{ playlist.songs.count }}
+                                        </div>
+                                    </div>
+
+                            
+
+                                    <!-- <table class="table table-borderless mt-3 mb-0 collapse" id="{{playlist.id}}-list" style="border-top: solid 1px #cccccc;">
+
+                                        <div class="table-body">
+                                         
+                                            <tr>
+                                                <td class="px-0" style="width: 20%">
+                                                    <img src="{% static 'img/OIP.jpg' %}"  style="width: 27px;" class="play-icon my-1 mx-0" data-toggle="tooltip" data-placement="bottom" title="Play" alt="">
+                                                </td>
+
+                                                <td class="px-0" style="width: 80%;">
+                                                   mast nazron se v b Allah...
+                                                </td>
+                                            </tr>
+                                  
+                                        
+                                        </div>
+                                         
+                                    </table> -->
+                                </div>
+                            </div>
+                            {% endfor %}
+
+                            
+
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+        <div class="row py-4">
+            {% for song in allSongs %}
+    
+              {% include 'list-of-songs.html' %}
+        
+            {% endfor %}
+        </div>
+    </div>
+
+
+<script src="{% static 'scripts/script.js' %}"></script>
+<script>
+    $('[data-toggle="tooltip"]').tooltip();
+
+ 
+    // Add to playlist
+    $(".add-to-playlist-btn").on('click', function () {
+      let btn_id = this.id;
+      let song_id = btn_id.split("-")[0];
+      let playlist_id = $(`#${song_id}-list`).val();
+
+      if (playlist_id && playlist_id != "") {
+          $(`#${song_id}-selection-error`).text("");
+
+          // console.log(`playlist id => ${playlist_id}`);
+          // console.log(`song id => ${song_id}`);
+
+          $.ajax({
+              url: "/add-to-playlist",
+              type: "GET",
+              data: {
+                  song_id: song_id,
+                  playlist_id: playlist_id
+              },
+              success: (response)=>{
+                  if (response.status) {
+                      location.reload();
+                  }else{
+                      alert("Something went wrong!");
+                  }
+              }
+          });
+          
+      }else{
+          $(`#${song_id}-selection-error`).text("Please select the playlist first!");
+      }
+    });
+
+
+
+
+
+
+
+
+    let audio_player = document.getElementById("player-audio");
+    let video_player = document.getElementById("player-video");
+
+    $("#player-audio").on('play', function () {
+        this.play();
+        video_player.play();
+    });
+
+    $("#player-audio").on('pause', function () {
+        this.pause();
+        video_player.pause();
+    });
+
+    $("#player-audio").bind("timeupdate", function() {
+        var currentTime = parseInt(this.currentTime, 10);
+        if(currentTime == 70) { 
+            console.log("70 seconds in");
+            $(this).unbind("timeupdate");
+        }
+    });
+
+</script>
+
+
+{% endblock content %}

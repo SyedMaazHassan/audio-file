@@ -1,96 +1,351 @@
+{% extends 'inc/base.html' %}
 {% load static %}
 
-{% include 'inc/head.inc.html' %}
-{% include 'inc/navbar.inc.html' %}
+{% block title %}
+    Main page
+{% endblock title %}
 
-<body>
 
-    <div class="container">
+{% block content %}
 
-        <form action="add-song" method="POST" enctype="multipart/form-data">
-          {% csrf_token %}
 
-          <div class="my-5">
-              <p class="my-3" style="color: grey; font-size:20px">Upload your favourite song here!</p>
+<!-- 
+<form action="#" method="post" enctype="multipart/form-data">
+  File: <input type="file" name="fup" id="fup" /><br>
+  Duration: <input type="text" name="f_du" id="f_du" size="5" /> seconds<br>
+  <input type="submit" value="Upload" />
+</form>
+<audio id="audio"></audio>
+
+<script>
+// Code to get duration of audio /video file before upload - from: http://coursesweb.net/
+
+//register canplaythrough event to #audio element to can get duration
+var f_duration =0;  //store duration
+document.getElementById('audio').addEventListener('canplaythrough', function(e){
+  //add duration in the input field #f_du
+  f_duration = Math.round(e.currentTarget.duration);
+  console.log(e.currentTarget);
+  document.getElementById('f_du').value = f_duration;
+  URL.revokeObjectURL(obUrl);
+});
+
+//when select a file, create an ObjectURL with the file and add it in the #audio element
+var obUrl;
+document.getElementById('fup').addEventListener('change', function(e){
+  var file = e.currentTarget.files[0];
+  //check file extension for audio/video type
+  if(file.name.match(/\.(avi|mp3|mp4|mpeg|ogg)$/i)){
+    obUrl = URL.createObjectURL(file);
+    document.getElementById('audio').setAttribute('src', obUrl);
+  }
+});
+</script>
+
+ -->
+
+
+
+
+
+
+<div class="container">
+
+    {% for message in messages %}
+
+      <div class="alert alert-success alert-dismissible fade show" role="alert">
+        {{ message }}
+        <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+
+    {% endfor %}
+
+
+
+    <form action="add-song" id="add-song-form" method="POST" enctype="multipart/form-data">
+      {% csrf_token %}
+
+      <div class="my-4">
+
+          <div class="row">
+            <div class="col-sm-12 py-2" id="left-upload-part">
+              <p class="mt-3" style="color: grey; font-size:20px">Upload your favourite song here!</p>
+
               <div class="my-1 p-5 text-center d-flex align-items-center justify-content-center dropzone" ondrop="now_drop(event)" id="dropzone" ondragover="allowdrop(event)" ondragleave="previous_state(event)" >
-                
+            
 
                 <div class="my-0 py-0">
-                  <audio id="audio" style="display: none;" controls>
+                  <audio id="audio" style="display: none;"  controls>
                       <source id="showing_div" src="" type="audio/mpeg">
                     Your browser does not support the audio element.
                   </audio>
-
+    
                   <div class="mt-3">
                       Drag your file here or &nbsp;&nbsp; 
                       <button type="button" class="btn btn-secondary" onclick="upload_file('target_file')">Upload file</button> 
+                      <input type="hidden" name="total_duration" id="total_duration">
+                      <input type="hidden" name="prompts" id="prompts">
                       <input type="file" id="target_file" name="targetfile" onchange="readURL(this, 'showing_div')" style="height: 0px; overflow:hidden; width: 0px;" required>  
                   </div>
                   
                 </div>
               
               </div>
-              <div class="row">
-                <div class="col-sm-6">
-                  <p class="text-success" id="success-msg"></p>
-      
-                </div>
-
-                <div class="col-sm-6 text-right">
-                  <button class="btn btn-info px-4" type="submit" id="submit-btn" style="display: none;">Save</button>
-                </div>
-
-
-              </div>
-      
-              <p class="text-danger mt-4" id="file-error-msg"></p>
-      
-          </div>
-
-        </form>
-
-
-        <h3>All added songs</h3>
-
-        {% if not allSongs %}
-
-          <div class="alert alert-warning" role="alert">
-            You have not added any song yet. Upload now in the above section!
-          </div>
-
-        {% endif %}
-
-        <div class="row py-4">
-      
-
-          {% for song in allSongs %}
-
-        
-          <div class="col-sm-4">
-
-            <div class="card" style="width: 100%;">
-              <!--tips: add .text-center,.text-right to the .card to change card text alignment-->
-              <div class="card-body">
-                <h6 class="card-subtitle my-2 text-muted">{{song.song_name}}</h6>
-                <audio controls style="width: 100%;">
-                    <source src="media/{{ song.song_file }}" type="audio/mpeg">
-                  Your browser does not support the audio element.
-                </audio>
-              </div>
+    
             </div>
 
-         
-          </div>
-          {% endfor %}
-        </div>
+            <div class="col-sm-5 py-2" id="right-upload-part" style="display: none;">
 
+              <p class="mt-3" style="color: grey; font-size:20px">Add prompts (<span id="total-prompts">0</span> / 4 added)</p>
+          
+              <table class="table table-borderless my-0" id="add-prompt-form">
+                <tbody id="table-body">
+
+                  <tr>
+                    <td class="my-0 p-0">
+                      <div class="form-group">
+                        <select class="form-control" style="border-radius: 5px 0px 0px 5px;" id="select-prompt">
+                          <option value="">Prompt</option>
+                          {% for prompt in all_prompts %}
+                            <option value="prompt-{{ prompt.id }}">{{ prompt.prompts_name }}</option>
+                          {% endfor %}
+                        </select>
+                        <small class="text-danger" id="select-prompt-error"></small>
+                      </div>
+                    </td>
+
+                    <td class="my-0 p-0">
+                      <div class="form-group">
+                        <select class="form-control" style="border-radius: 0px;" id="select-hours">
+                          <option value="">Hour</option>
+                   
+                        </select>
+                        <small class="text-danger" id="select-time-error"></small>
+                      </div>
+                    </td>
+
+                    <td class="my-0 p-0">
+                      <div class="form-group">
+                        <select class="form-control" style="border-radius: 0px;" id="select-mins">
+                          <option value="">Min</option>
+                         
+                        </select>
+                      </div>
+                    </td>
+
+                    <td class="my-0 p-0">
+                      <div class="form-group">
+                        <select class="form-control" style="border-radius: 0px;" id="select-secs">
+                          <option value="">Sec</option>
+                          
+                        </select>
+                      </div>
+                    </td>
+
+                    <td class="my-0 p-0">
+                      <button type="button"  style="border-radius: 0px 5px 5px 0px;" class="btn btn-info" onclick="add_prompt()" >Add</button>
+                    </td>
+                  </tr>
+
+                </tbody>
+              </table>
+
+              <table class="table border table-striped my-0">
+                <tbody id="all-prompt-list" class="p-3">
+                  <tr>
+                    <td><b>Prompt name</b></td>
+                    <td><b>Instance</b></td>
+                    <td><b>Remove</b></td>
+                  </tr>
+
+                </tbody>
+              </table>
+
+        
+
+
+            </div>
+          </div>        
+
+          <div class="row">
+            <div class="col-sm-6">
+              <p class="text-success" id="success-msg"></p>
+  
+            </div>
+
+            <div class="col-sm-6 text-right">
+              <button class="btn btn-info px-4" type="submit" id="submit-btn" style="display: none;">Save</button>
+            </div>
+
+
+          </div>
+  
+          <p class="text-danger mt-4" id="file-error-msg"></p>
+  
+      </div>
+
+    </form>
+
+
+    <h3>All added songs</h3>
+
+    {% if not allSongs %}
+
+      <div class="alert alert-warning" role="alert">
+        You have not added any song yet. Upload now in the above section!
+      </div>
+
+    {% endif %}
+
+    <!-- to loop through all the available songs -->
+
+    <div class="row py-4">
+        {% for song in allSongs %}
+
+          {% include 'list-of-songs.html' %}
+    
+        {% endfor %}
     </div>
 
-  
-</body>
+    {% if totalSongs > 3 %}
+    <div class="my-1 text-center">
+        <a href="play/list">
+          <button type="button" class="btn btn-info px-4">See more</button>
+        </a>
+    </div>
+    {% endif %}
 
+</div>
 
+<br>
+<script src="{% static 'scripts/script.js' %}"></script>
 <script>
+  $('[data-toggle="tooltip"]').tooltip();
+
+  Object.size = function(obj) {
+    var size = 0,
+      key;
+    for (key in obj) {
+      if (obj.hasOwnProperty(key)) size++;
+    }
+    return size;
+  };
+
+  var prompts = {}
+  var counter = 0;
+
+  function add_prompt() {
+    let prompt = $("#select-prompt").val();
+    let hours = $("#select-hours").val();
+    let mins = $("#select-mins").val();
+    let secs = $("#select-secs").val();
+
+    if (prompt == "") {
+      $("#select-prompt-error").text("Select prompt");
+      return 
+    }else{
+      $("#select-prompt-error").text("");
+    }
+
+    if (hours == "" || mins == "" || secs == "") {
+      $("#select-time-error").text("Select time");
+      return 
+    }else{
+      $("#select-time-error").text("");
+    }
+
+    let total_seconds = (3600 * parseInt(hours)) + (60 * parseInt(mins)) + parseInt(secs);
+
+    prompts[counter] = {
+      prompt_id: prompt,
+      instance: total_seconds
+    }
+
+    $("#all-prompt-list").append(`
+    
+        <tr id="prompt-${counter}">
+          <td>${$("#select-prompt option:selected").text()}</td>
+          <td>${hours}:${mins}:${secs}</td>
+          <td>
+              <i class="material-icons text-danger cursor" onclick="remove_prompt('${counter}')">delete</i>  
+          </td>
+        </tr>
+    
+    `);
+
+
+    $("#select-prompt").prop("selectedIndex", 0);
+    $("#select-hours").prop("selectedIndex", 0);
+    $("#select-mins").prop("selectedIndex", 0);
+    $("#select-secs").prop("selectedIndex", 0);
+
+    let total_prompts = Object.size(prompts);
+    $("#total-prompts").text(total_prompts);
+    
+    if (total_prompts > 3) {
+      $("#add-prompt-form").css('display', 'none');
+    }
+  
+
+    counter += 1;
+  }
+
+
+  function remove_prompt(id) {
+    $("#select-prompt").prop("selectedIndex", 0);
+    $("#select-hours").prop("selectedIndex", 0);
+    $("#select-mins").prop("selectedIndex", 0);
+    $("#select-secs").prop("selectedIndex", 0);
+
+  
+    $(`#prompt-${id}`).remove();
+    delete prompts[parseInt(id)];
+    let total_prompts = Object.size(prompts);
+    $("#total-prompts").text(total_prompts);
+    if (total_prompts < 4) {
+      $("#add-prompt-form").css('display', '');
+    }
+
+  }
+
+
+    // Add to playlist
+    $(".add-to-playlist-btn").on('click', function () {
+      let btn_id = this.id;
+      let song_id = btn_id.split("-")[0];
+      let playlist_id = $(`#${song_id}-list`).val();
+
+      if (playlist_id && playlist_id != "") {
+          $(`#${song_id}-selection-error`).text("");
+
+          // console.log(`playlist id => ${playlist_id}`);
+          // console.log(`song id => ${song_id}`);
+
+          $.ajax({
+              url: "/add-to-playlist",
+              type: "GET",
+              data: {
+                  song_id: song_id,
+                  playlist_id: playlist_id
+              },
+              success: (response)=>{
+                  if (response.status) {
+                      location.reload();
+                  }else{
+                      alert("Something went wrong!");
+                  }
+              }
+          });
+          
+      }else{
+          $(`#${song_id}-selection-error`).text("Please select the playlist first!");
+      }
+  });
+
+
+
   document.getElementById("target_file").addEventListener("change", handleFiles, false);
 
 
@@ -110,6 +365,7 @@
       event.preventDefault();
       input = document.getElementById("target_file");
       input.files = event.dataTransfer.files;
+      console.log(input.files);
       readURL(input, 'showing_div');
   }
 
@@ -123,29 +379,91 @@
         showNow(files[0]);
     }
 
+  var obUrl;
+
   function showNow(myFile){
-        $("#showing_div").attr("src", URL.createObjectURL(myFile));
+        obUrl = URL.createObjectURL(myFile);
+        $("#showing_div").attr("src", obUrl);
         document.getElementById("audio").load();
         $("#dropzone").removeClass("dragover");
   }
 
 
+  //register canplaythrough event to #audio element to can get duration
+  var f_duration = 0;  //store duration
+  document.getElementById('audio').addEventListener('canplaythrough', function(e){
+    //add duration in the input field #f_du
+    f_duration = Math.round(e.currentTarget.duration);
+
+    $("#total_duration").val(f_duration);
+
+    let new_duration = new Date(f_duration * 1000).toISOString().substr(11, 8);
+    let divided = new_duration.split(":");
+    let hours = parseInt(divided[0]);
+    let minutes = parseInt(divided[1]);
+    let seconds = parseInt(divided[2]);
+
+    $("#select-hours").children().remove();
+    $("#select-mins").children().remove();
+    $("#select-secs").children().remove();
+
+    $("#select-hours").append(`
+        <option value="Hour">Hour</option>
+    `);
+
+    $("#select-mins").append(`
+        <option value="">Min</option>
+    `);
+
+    $("#select-secs").append(`
+        <option value="">Sec</option>
+    `);
+
+    for (let i = 0; i <= hours; i++) {
+      let number = (i).toLocaleString('en-US', {minimumIntegerDigits: 2, useGrouping:false});
+      $("#select-hours").append(`
+          <option value="${number}">${number}</option>;
+      `);
+    }
+
+    for (let i = 0; i <= minutes; i++) {
+      let number = (i).toLocaleString('en-US', {minimumIntegerDigits: 2, useGrouping:false});
+      $("#select-mins").append(`
+          <option value="${number}">${number}</option>;
+      `);
+    }
+
+    for (let i = 0; i <= seconds; i++) {
+      let number = (i).toLocaleString('en-US', {minimumIntegerDigits: 2, useGrouping:false});
+      $("#select-secs").append(`
+          <option value="${number}">${number}</option>;
+      `);
+    }
+
+
+    URL.revokeObjectURL(obUrl);
+  });
+
+
   function readURL(input, show) {
         $("#"+show).css('display', 'none');
+
+
         nameFile = input.files[0].name.split(".");
         nameFile = nameFile[nameFile.length-1];
         
-        console.log(nameFile);
-        if(nameFile=="mp3"){
+        if(nameFile=="mp3" || nameFile=="wav"){
             if (input.files && input.files[0]) {
 
                 showNow(input.files[0]);
-                $("#audio").css('display', '');
+                // $("#audio").css('display', '');
                 $("#submit-btn").css('display', '');
                 $("#file-error-msg").text("");
                 $("#success-msg").text("You song has been attached!");
+                $("#left-upload-part").removeClass("col-sm-12");
+                $("#left-upload-part").addClass("col-sm-7");
+                $("#right-upload-part").css("display", "");
 
-    
             }
         }else{
             $("#see_docs_file").css('display', 'none');
@@ -165,7 +483,13 @@
     }
 
 
+    $("#add-song-form").on('submit', function () {
+        $("#prompts").val(
+          JSON.stringify(prompts)
+        );
+    })
+
+
 </script>
 
-
-</html> 
+{% endblock %}

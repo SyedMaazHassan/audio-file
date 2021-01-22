@@ -1,0 +1,21 @@
+{% load static %}
+{% include 'inc/head.inc.html' %}
+
+    <title>
+        {% block title %}
+
+        {% endblock title %}
+    </title>
+
+</head>
+
+{% include 'inc/navbar.inc.html' %}
+
+<body>
+    <br>
+    {% block content %}
+    {% endblock content %}
+</body>
+
+</html>
+

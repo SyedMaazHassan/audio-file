@@ -1,0 +1,59 @@
+{% load static %}
+
+<div class="col-sm-4 py-3">
+
+<div class="card song-card" style="width: 100%;" data-toggle="tooltip" title="{{song.song_name}}" >
+
+    <div class="card-body text-center">
+    {% if song.get_extension == 'mp3' %}
+        <img src="{% static 'img/mp3-new.png' %}" class="music-ext-icon" alt="">
+    {% else %}
+        <img src="{% static 'img/wav-new.png' %}" class="music-ext-icon" alt="">
+    {% endif %}
+    <h6 class="card-subtitle my-2 text-muted">{{song.get_wrapped_name}}</h6>
+
+    <div class="d-flex align-items-center justify-content-center">
+        <i class="material-icons text-danger cursor favorite_heart" id="like_{{ song.id }}"  title="{% if not song.is_favorite %}Mark as{% else %}Remove from{% endif %} favorite">favorite{% if not song.is_favorite %}_border{% endif %}</i>
+        <a href="play/{{ song.id }}-{{ song.song_name }}" class="mx-3">
+        <img src="{% static 'img/OIP.jpg' %}" class="play-icon my-2" data-toggle="tooltip" data-placement="bottom" title="Play" alt="">
+        </a>
+        <a data-toggle="collapse" data-target="#add-to-playlist-form-{{song.id}}">
+            <i class="material-icons text-success cursor" data-toggle="tooltip"  title="Add to play list" data-placement="bottom">add_circle</i>
+        </a>
+    </div>
+
+
+    <div class="row px-3 collapse" id="add-to-playlist-form-{{song.id}}">
+        <div class="col-sm-9 py-2 px-0">
+            <div class="form-group">
+                <select class="form-control" id="{{song.id}}-list" style="border-radius: 5px 0px 0px 5px;">
+                    <option value="">Select play list</option>
+                    {% for playlist in all_playlists %}
+                        <option value="{{ playlist.id }}">{{ playlist.playlist_name }}</option>
+                    {% endfor %}
+                </select>
+
+            </div>
+            <small class="text-danger" id="{{song.id}}-selection-error"></small>
+
+            <!-- <input type="text" name="playlistName" placeholder="Play list name" style="border-radius: 5px 0px 0px 5px;" class="form-control" required> -->
+        </div>
+
+        <div class="col-sm-3 py-2 px-0">
+            <button type="button" class="btn btn-info btn-block add-to-playlist-btn" id="{{song.id}}-add-to-playlist-btn" style="border-radius: 0px 5px 5px 0px;">save</button>
+        </div>
+    </div>
+
+
+    
+    </div>
+</div>
+
+
+</div>
+
+
+<script>
+
+</script>
+
